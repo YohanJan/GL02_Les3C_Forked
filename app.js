@@ -30,45 +30,58 @@ function lireTousLesFichiersGift() {
 function extraireQuestions(contenu) {
     return contenu.split('\n')
         .filter(ligne => ligne.startsWith('::')) // Filtre les questions
-        .map(ligne => ligne.replace(/^::.*?::/, '').trim()); // Retire le titre entre "::"
+        .map(ligne => ({
+            identifiant: ligne.match(/^::(.*?)::/)?.[1] || 'Inconnu',
+            contenu: ligne.replace(/^::.*?::/, '').trim() // Supprime l'identifiant et nettoie
+        }));
 }
 
-// Fonction pour rechercher une question spécifique
-function rechercherQuestion(motCle, questions) {
-    return questions.filter(question => question.toLowerCase().includes(motCle.toLowerCase()));
+// Fonction pour rechercher des questions par mot-clé
+function rechercherQuestions(motCle, questions) {
+    return questions.filter(question =>
+        question.contenu.toLowerCase().includes(motCle.toLowerCase())
+    );
 }
 
-// Fonction pour afficher les questions avec pagination
-function afficherQuestionsAvecPagination(questions, pageSize = 10) {
-    let currentPage = 0;
+// Fonction pour afficher les détails d'une question
+function afficherDetailsQuestion(question) {
+    console.log("\n=== Détails de la question ===");
+    console.log(`Identifiant : ${question.identifiant}`);
+    console.log(`Question : ${question.contenu}`);
+}
 
-    function afficherPage(page) {
-        const startIndex = page * pageSize;
-        const endIndex = Math.min(startIndex + pageSize, questions.length);
-        console.log(`\n=== Questions ${startIndex + 1} à ${endIndex} sur ${questions.length} ===`);
-        for (let i = startIndex; i < endIndex; i++) {
-            console.log(`${i + 1}. ${questions[i]}`);
-        }
-
-        if (endIndex < questions.length) {
-            console.log("\nTapez 'n' pour la page suivante ou 'q' pour quitter.");
-        } else {
-            console.log("\nVous avez atteint la fin des questions. Tapez 'q' pour quitter.");
-        }
+// Fonction principale : Afficher toutes les questions sans pagination
+function afficherToutesLesQuestions(questions) {
+    if (questions.length === 0) {
+        console.log("Aucune question disponible.");
+        menu();
+        return;
     }
 
-    afficherPage(currentPage);
+    console.log("\n=== Liste des Questions ===");
+    questions.forEach((question, index) => {
+        console.log(`${index + 1}. ${question.contenu}`);
+    });
+
+    console.log("\nTapez le numéro de la question pour afficher ses détails.");
+    console.log("Tapez 'r' pour revenir au menu principal.");
+    console.log("Tapez 'q' pour quitter.");
 
     rl.on('line', (input) => {
-        if (input.toLowerCase() === 'n' && (currentPage + 1) * pageSize < questions.length) {
-            currentPage++;
-            afficherPage(currentPage);
-        } else if (input.toLowerCase() === 'q') {
-            console.log("Retour au menu principal.");
+        if (input.toLowerCase() === 'r') {
+            console.log("Retour au menu principal...");
             rl.removeAllListeners('line');
             menu();
+        } else if (input.toLowerCase() === 'q') {
+            console.log("Au revoir !");
+            rl.close();
         } else {
-            console.log("Commande non reconnue. Tapez 'n' pour la page suivante ou 'q' pour quitter.");
+            const index = parseInt(input) - 1;
+            if (index >= 0 && index < questions.length) {
+                afficherDetailsQuestion(questions[index]);
+            } else {
+                console.log("Choix invalide. Essayez à nouveau.");
+            }
         }
     });
 }
@@ -86,21 +99,18 @@ function menu() {
 
         switch (choix) {
             case '1':
-                rl.question("Entrez le mot-clé à rechercher : ", (motCle) => {
-                    const resultats = rechercherQuestion(motCle, questions);
+                rl.question("Entrez le mot-clé pour la recherche : ", (motCle) => {
+                    const resultats = rechercherQuestions(motCle, questions);
                     if (resultats.length === 0) {
-                        console.log("Aucune question trouvée contenant ce mot-clé.");
+                        console.log("\nAucun résultat trouvé.");
+                        menu();
                     } else {
-                        afficherQuestionsAvecPagination(resultats);
+                        afficherToutesLesQuestions(resultats);
                     }
                 });
                 break;
             case '2':
-                if (questions.length === 0) {
-                    console.log("Aucune question disponible.");
-                } else {
-                    afficherQuestionsAvecPagination(questions);
-                }
+                afficherToutesLesQuestions(questions);
                 break;
             case '3':
                 console.log("Au revoir !");
@@ -113,5 +123,11 @@ function menu() {
     });
 }
 
-// Lancer le menu
-menu();
+// Simuler l'authentification et lancer le menu
+function demarrerApplication() {
+    console.log("Authentification réussie ! Bienvenue dans l'application.");
+    menu();
+}
+
+// Démarrer l'application
+demarrerApplication();
