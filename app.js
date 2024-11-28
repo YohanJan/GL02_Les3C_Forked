@@ -77,6 +77,8 @@ function mainMenu() {
     console.log('1. Afficher toutes les questions');
     console.log('2. Rechercher des questions par mot-clé');
     console.log('3. Créer un fichier d’examen');
+    console.log('4. Générer un fichier VCard');
+    console.log('5. Simuler un examen');
     console.log('6. Quitter');
 
     rl.question('Choisissez une option (1-6) : ', (choice) => {
@@ -91,6 +93,14 @@ function mainMenu() {
 
             case '3': // Créer un fichier d’examen
                 creerExamen();
+                break;
+
+            case '4': // Générer un fichier VCard
+                genererVCard();
+                break;
+
+            case '5': // Simuler un examen
+                simulerExamen();
                 break;
 
             case '6': // Quitter
@@ -218,6 +228,8 @@ function afficherDetailsQuestion(question, allQuestions) {
 }
 
 
+
+
 /**
  * Rechercher des questions par mot-clé
  */
@@ -273,6 +285,75 @@ function saveExamToFile(questions, fileName) {
         .join('\n\n');
     fs.writeFileSync(outputPath, content, 'utf-8');
     console.log(`\nFichier d'examen sauvegardé avec succès : ${outputPath}`);
+}
+
+/**
+ * Fonction pour générer une VCard
+ */
+function generateVCard(surname, name, email, phone) {
+    return [
+        'BEGIN:VCARD',
+        'VERSION:4.0',
+        `FN:${name} ${surname}`,
+        `EMAIL:${email}`,
+        `TEL:${phone}`,
+        'END:VCARD'
+    ].join('\n');
+}
+/**
+ * Fonction pour sauvegarder une VCard
+ */
+function saveVCard(vcard, fileName) {
+    const vcardFolder = './vcard/';
+    if (!fs.existsSync(vcardFolder)) {
+        fs.mkdirSync(vcardFolder); // Créer le dossier s'il n'existe pas
+    }
+    const filePath = path.join(vcardFolder, `${fileName}.vcf`);
+    fs.writeFileSync(filePath, vcard, 'utf-8');
+    console.log(`\nFichier VCard créé avec succès : ${filePath}`);
+}
+
+/**
+ * Générer un fichier VCard
+ */
+function genererVCard() {
+    rl.question('Entrez votre prénom : ', (name) => {
+        rl.question('Entrez votre nom : ', (surname) => {
+            rl.question('Entrez votre email : ', (email) => {
+                rl.question('Entrez votre numéro de téléphone : ', (phone) => {
+                    const vcard = generateVCard(surname, name, email, phone);
+                    rl.question('Entrez un nom pour le fichier VCard : ', (fileName) => {
+                        saveVCard(vcard, fileName);
+                        mainMenu();
+                    });
+                });
+            });
+        });
+    });
+}
+/**
+ * Simuler un examen
+ */
+function simulerExamen() {
+    const files = listGiftFiles(examsFolder);
+    if (files.length === 0) {
+        console.log('Aucun fichier d’examen trouvé.');
+        mainMenu();
+    } else {
+        console.log('Fichiers d’examen disponibles :');
+        files.forEach((file, index) => console.log(`[${index + 1}] ${file}`));
+
+        rl.question('\nEntrez le numéro du fichier d’examen à simuler : ', (choice) => {
+            const fileIndex = parseInt(choice, 10) - 1;
+            if (fileIndex >= 0 && fileIndex < files.length) {
+                const filePath = path.join(examsFolder, files[fileIndex]);
+                simulateExam(filePath, rl);
+            } else {
+                console.log('Numéro invalide.');
+                mainMenu();
+            }
+        });
+    }
 }
 
 // Initialiser les dossiers si nécessaires
