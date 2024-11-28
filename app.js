@@ -107,7 +107,7 @@ function mainMenu() {
                 console.log('Au revoir !');
                 rl.close(); // Fermer readline
                 break;
-            case 'test':
+            case 'test': 
                 afficherQuestionsTest();
                 break;
 

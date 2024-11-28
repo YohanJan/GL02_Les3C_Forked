@@ -1,0 +1,12 @@
+{
+  "name": "gl02_les3c",
+  "version": "1.0.0",
+  "description": "projet GL02 - Enoe, Nourhane, Romain",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
