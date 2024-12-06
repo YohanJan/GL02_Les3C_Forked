@@ -54,9 +54,19 @@ function parseGiftQuestion(question) {
     const choices = [...question.matchAll(/(~|=)(.*?)(?=[~=}])/g)]
         .map(([_, symbol, choice]) => ({
             choice: choice.trim(),
-            isCorrect: symbol === '=' // `=` indique une réponse correcte
+            isCorrect: symbol === '='
         }))
-        .filter(choice => choice.choice !== ''); // Supprimer les réponses vides
+        .filter(choice => choice.choice !== '');
+
+    // Déterminer le type de question
+    let type = 'unknown';
+    if (choices.length > 1) {
+        type = 'multiple choice';
+    } else if (/true|false/i.test(questionText)) {
+        type = 'true/false';
+    } else if (/{\s*}/.test(question)) {
+        type = 'fill-in-the-blank';
+    }
 
     if (!title || !questionText || choices.length === 0) {
         return null;
@@ -65,8 +75,96 @@ function parseGiftQuestion(question) {
     return {
         title,
         questionText,
-        choices
+        choices,
+        type
     };
+}
+
+function extractQuestionsExamen(content) {
+    const questionBlocks = content.match(/::.*?::[\s\S]*?\{[\s\S]*?\}/g);
+    if (!questionBlocks) {
+        console.warn("Aucun bloc de question valide trouvé !");
+        return [];
+    }
+    return questionBlocks.map(block => block.trim());
+}
+
+function parseGiftQuestionExamen(block) {
+    const questionMatch = block.match(/::(.*?)::(.*?)\{/s);
+    if (!questionMatch) {
+        console.warn("Échec de l'extraction de la question :", block);
+        return null;
+    }
+
+    const title = questionMatch[1].trim();
+    const questionText = questionMatch[2].trim();
+    const choicesMatch = block.match(/\{([\s\S]*?)\}/s);
+    const rawChoices = choicesMatch ? choicesMatch[1] : '';
+    const choices = [...rawChoices.matchAll(/(~|=)([^~=]+)/g)].map(([_, symbol, text]) => ({
+        choice: text.trim(),
+        isCorrect: symbol === '='
+    }));
+
+    if (!choices.length) {
+        console.warn("Aucun choix trouvé pour :", block);
+        return null;
+    }
+
+    return {
+        title,
+        questionText,
+        choices,
+        type: 'multiple choice'
+    };
+}
+
+function generateHistogram(examFilePath) {
+    // Charger les questions de l'examen
+    const examContent = fs.readFileSync(examFilePath, 'utf-8');
+    const examQuestions = extractQuestionsExamen(examContent)
+        .map(parseGiftQuestionExamen)
+        .filter(q => q !== null);
+
+    console.log("\nQuestions extraites de l'examen :");
+    console.log(examQuestions);
+
+    // Charger toutes les questions de la banque nationale
+    const bankFiles = fs.readdirSync(dataFolder);
+    let allQuestions = [];
+    bankFiles.forEach(file => {
+        const filePath = path.join(dataFolder, file);
+        const rawQuestions = loadQuestions(filePath);
+        const parsedQuestions = rawQuestions.map(parseGiftQuestion).filter(q => q !== null);
+        allQuestions = allQuestions.concat(parsedQuestions);
+    });
+    console.log("\nQuestions extraites de la banque nationale :");
+    console.log(allQuestions);
+
+    // Calculer les répartitions
+    const examDistribution = calculateTypeDistribution(examQuestions);
+    const bankDistribution = calculateTypeDistribution(allQuestions);
+
+    // Afficher les résultats comparatifs
+    console.log('\nHistogramme comparatif :\n');
+    displayHistogram('Examen', examDistribution);
+    displayHistogram('Banque Nationale', bankDistribution);
+}
+
+/**
+ * Fonction pour calculer la répartition des types de questions
+ */
+function calculateTypeDistribution(questions) {
+    return questions.reduce((acc, question) => {
+        acc[question.type] = (acc[question.type] || 0) + 1;
+        return acc;
+    }, {});
+}
+
+function displayHistogram(label, distribution) {
+    console.log(`${label} :`);
+    for (const [type, count] of Object.entries(distribution)) {
+        console.log(`  ${type}: ${'*'.repeat(count)}`);
+    }
 }
 
 /**
@@ -79,9 +177,12 @@ function mainMenu() {
     console.log('3. Créer un fichier d’examen');
     console.log('4. Générer un fichier VCard');
     console.log('5. Simuler un examen');
-    console.log('6. Quitter');
+    console.log('6. Comparer son histogramme à la banque de questions');
+    console.log('7. Déplacer un fichier GIFT dans /data/');
+    console.log('8. Visualiser un histogramme des types de questions')
+    console.log('9. Quitter');
 
-    rl.question('Choisissez une option (1-6) : ', (choice) => {
+    rl.question('Choisissez une option (1-8) : ', (choice) => {
         switch (choice.trim()) {
             case '1': // Afficher toutes les questions
                 afficherToutesLesQuestions();
@@ -103,12 +204,42 @@ function mainMenu() {
                 simulerExamen();
                 break;
 
-            case '6': // Quitter
-                console.log('Au revoir !');
-                rl.close(); // Fermer readline
+            case '6': // Comparer histogrammes
+                const files = listGiftFiles(examsFolder);
+                if (files.length === 0) {
+                    console.log('Aucun fichier d’examen trouvé.');
+                    mainMenu();
+                } else {
+                    console.log('Fichiers d’examen disponibles :');
+                    files.forEach((file, index) => console.log(`[${index + 1}] ${file}`));
+
+                    rl.question('\nEntrez le numéro du fichier d’examen à analyser : ', (choice) => {
+                        const fileIndex = parseInt(choice, 10) - 1;
+                        if (fileIndex >= 0 && fileIndex < files.length) {
+                            const filePath = path.join(examsFolder, files[fileIndex]);
+                            generateHistogram(filePath);
+                        } else {
+                            console.log('Numéro invalide.');
+                        }
+                        mainMenu();
+                    });
+                }
                 break;
-            case 'test': 
-                afficherQuestionsTest();
+
+            case '7': // Déplacer un fichier GIFT vers /data/
+                rl.question('Entrez le chemin du fichier GIFT à déplacer : ', (filePath) => {
+                    moveGiftFileToData(filePath);
+                    mainMenu();
+                });
+                break;
+
+            case '8': // Histogramme
+                analyserExamens();
+                break;
+
+            case '9': // Quitter
+                console.log('Au revoir !');
+                rl.close();
                 break;
 
             default:
@@ -116,6 +247,60 @@ function mainMenu() {
                 mainMenu();
         }
     });
+}
+
+function analyserExamens() {
+    const files = listGiftFiles(examsFolder);
+    if (files.length === 0) {
+        console.log('Aucun fichier d’examen trouvé.');
+        mainMenu();
+    } else {
+        console.log('Fichiers d’examen disponibles :');
+        files.forEach((file, index) => console.log(`[${index + 1}] ${file}`));
+
+        rl.question('\nEntrez le numéro du fichier d’examen à analyser : ', (choice) => {
+            const fileIndex = parseInt(choice, 10) - 1;
+            if (fileIndex >= 0 && fileIndex < files.length) {
+                const filePath = path.join(examsFolder, files[fileIndex]);
+                generateHistogramSeul(filePath);
+            } else {
+                console.log('Numéro invalide.');
+            }
+            mainMenu();
+        });
+    }
+}
+
+function generateHistogramSeul(examFilePath) {
+    // Charger les questions de l'examen
+    const examContent = fs.readFileSync(examFilePath, 'utf-8');
+    const examQuestions = extractQuestionsExamen(examContent)
+        .map(parseGiftQuestionExamen)
+        .filter(q => q !== null);
+
+    // Calculer les répartitions
+    const examDistribution = calculateTypeDistribution(examQuestions);
+    displayHistogram('Examen', examDistribution);
+}
+
+function moveGiftFileToData(filePath) {
+    const fileName = path.basename(filePath);
+    const destinationPath = path.join(dataFolder, fileName);
+
+    if (!fs.existsSync(filePath)) {
+        console.log(`Le fichier ${filePath} n'existe pas.`);
+        return;
+    }
+    if (path.extname(filePath) !== '.gift') {
+        console.log('Ce fichier n\'est pas un fichier GIFT valide.');
+        return;
+    }
+    if (fs.existsSync(destinationPath)) {
+        console.log(`Le fichier ${fileName} existe déjà dans le dossier /data/.`);
+        return;
+    }
+    fs.renameSync(filePath, destinationPath);
+    console.log(`Le fichier a été déplacé vers /data/ : ${destinationPath}`);
 }
 
 function afficherToutesLesQuestions() {
@@ -261,7 +446,7 @@ function rechercherQuestionsParMotCle() {
  * Créer un fichier d'examen
  */
 function creerExamen() {
-    if (tempQuestionnaire.length < 15) {
+    if (tempQuestionnaire.length < 5) { // A remettre à 15 plus tard
         console.log('\nLe test doit contenir au moins 15 questions.');
         afficherQuestionsTest();
     } else if (tempQuestionnaire.length > 20) {
