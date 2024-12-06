@@ -15,24 +15,19 @@ const rl = readline.createInterface({
     output: process.stdout,
 });
 
-/**
- * Fonction pour lister les fichiers GIFT dans un dossier
- */
+// Fonction pour lister les fichiers GIFT dans un dossier
 function listGiftFiles(folderPath) {
     return fs.readdirSync(folderPath).filter(file => file.endsWith('.gift'));
 }
 
-/**
- * Fonction pour charger les questions d'un fichier GIFT
- */
+// Fonction pour charger les questions d'un fichier GIFT
+
 function loadQuestions(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8');
     return extractQuestions(content);
 }
 
-/**
- * Fonction pour extraire les questions d'un fichier GIFT
- */
+// Fonction pour extraire les questions d'un fichier GIFT
 function extractQuestions(content) {
     return content
         .split('\n\n') // Séparer par double saut de ligne
@@ -43,9 +38,7 @@ function extractQuestions(content) {
         });
 }
 
-/**
- * Fonction pour analyser une question GIFT et extraire le texte et les réponses
- */
+// Fonction pour analyser une question GIFT et extraire le texte et les réponses
 function parseGiftQuestion(question) {
     const questionMatch = question.match(/::(.*?)::(.*)\{/);
     const title = questionMatch ? questionMatch[1].trim() : '';
@@ -150,9 +143,7 @@ function generateHistogram(examFilePath) {
     displayHistogram('Banque Nationale', bankDistribution);
 }
 
-/**
- * Fonction pour calculer la répartition des types de questions
- */
+// Fonction pour calculer la répartition des types de questions
 function calculateTypeDistribution(questions) {
     return questions.reduce((acc, question) => {
         acc[question.type] = (acc[question.type] || 0) + 1;
@@ -167,9 +158,8 @@ function displayHistogram(label, distribution) {
     }
 }
 
-/**
- * Menu principal
- */
+// Menu principal
+
 function mainMenu() {
     console.log('\nMenu principal :');
     console.log('1. Afficher toutes les questions');
@@ -373,10 +363,9 @@ function afficherQuestionsTest() {
 }
 
 
-/**
- * Fonction pour afficher les détails et les réponses d'une question
- * et permettre d'ajouter la question au test.
- */
+
+// Fonction pour afficher les détails et les réponses d'une question et permettre d'ajouter la question au test.
+
 function afficherDetailsQuestion(question, allQuestions) {
     console.log(`\nDétails de la question : ${question.title}`);
     console.log(`Description : ${question.questionText}`);
@@ -415,9 +404,8 @@ function afficherDetailsQuestion(question, allQuestions) {
 
 
 
-/**
- * Rechercher des questions par mot-clé
- */
+// Rechercher des questions par mot-clé
+
 function rechercherQuestionsParMotCle() {
     rl.question('\nEntrez un mot-clé pour rechercher des questions : ', (keyword) => {
         const files = listGiftFiles(dataFolder);
@@ -442,9 +430,8 @@ function rechercherQuestionsParMotCle() {
     });
 }
 
-/**
- * Créer un fichier d'examen
- */
+// Créer un fichier d'examen
+
 function creerExamen() {
     if (tempQuestionnaire.length < 5) { // A remettre à 15 plus tard
         console.log('\nLe test doit contenir au moins 15 questions.');
@@ -472,9 +459,7 @@ function saveExamToFile(questions, fileName) {
     console.log(`\nFichier d'examen sauvegardé avec succès : ${outputPath}`);
 }
 
-/**
- * Fonction pour générer une VCard
- */
+// Fonction pour générer une VCard
 function generateVCard(surname, name, email, phone) {
     return [
         'BEGIN:VCARD',
@@ -485,9 +470,8 @@ function generateVCard(surname, name, email, phone) {
         'END:VCARD'
     ].join('\n');
 }
-/**
- * Fonction pour sauvegarder une VCard
- */
+// Fonction pour sauvegarder une VCard
+
 function saveVCard(vcard, fileName) {
     const vcardFolder = './vcard/';
     if (!fs.existsSync(vcardFolder)) {
@@ -498,9 +482,8 @@ function saveVCard(vcard, fileName) {
     console.log(`\nFichier VCard créé avec succès : ${filePath}`);
 }
 
-/**
- * Générer un fichier VCard
- */
+// Générer un fichier VCard
+
 function genererVCard() {
     rl.question('Entrez votre prénom : ', (name) => {
         rl.question('Entrez votre nom : ', (surname) => {
@@ -516,9 +499,8 @@ function genererVCard() {
         });
     });
 }
-/**
- * Simuler un examen
- */
+// Simuler un examen
+
 function simulerExamen() {
     const files = listGiftFiles(examsFolder);
     if (files.length === 0) {
