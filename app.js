@@ -76,7 +76,7 @@ function parseGiftQuestion(question) {
 function extractQuestionsExamen(content) {
     const questionBlocks = content.match(/::.*?::[\s\S]*?\{[\s\S]*?\}/g);
     if (!questionBlocks) {
-        console.warn("Aucun bloc de question valide trouvé !");
+        console.warn('\x1b[31m%s\x1b[0m', "Aucun bloc de question valide trouvé !");
         return [];
     }
     return questionBlocks.map(block => block.trim());
@@ -85,7 +85,7 @@ function extractQuestionsExamen(content) {
 function parseGiftQuestionExamen(block) {
     const questionMatch = block.match(/::(.*?)::(.*?)\{/s);
     if (!questionMatch) {
-        console.warn("Échec de l'extraction de la question :", block);
+        console.warn('\x1b[31m%s\x1b[0m', "Échec de l'extraction de la question :", block);
         return null;
     }
 
@@ -99,7 +99,7 @@ function parseGiftQuestionExamen(block) {
     }));
 
     if (!choices.length) {
-        console.warn("Aucun choix trouvé pour :", block);
+        console.warn('\x1b[31m%s\x1b[0m', "Aucun choix trouvé pour :", block);
         return null;
     }
 
@@ -118,7 +118,7 @@ function generateHistogram(examFilePath) {
         .map(parseGiftQuestionExamen)
         .filter(q => q !== null);
 
-    console.log("\nQuestions extraites de l'examen :");
+    console.log('\x1b[32m%s\x1b[0m', "\nQuestions extraites de l'examen :");
     console.log(examQuestions);
 
     // Charger toutes les questions de la banque nationale
@@ -130,7 +130,7 @@ function generateHistogram(examFilePath) {
         const parsedQuestions = rawQuestions.map(parseGiftQuestion).filter(q => q !== null);
         allQuestions = allQuestions.concat(parsedQuestions);
     });
-    console.log("\nQuestions extraites de la banque nationale :");
+    console.log('\x1b[32m%s\x1b[0m', "\nQuestions extraites de la banque nationale :");
     console.log(allQuestions);
 
     // Calculer les répartitions
@@ -161,18 +161,19 @@ function displayHistogram(label, distribution) {
 // Menu principal
 
 function mainMenu() {
-    console.log('\nMenu principal :');
-    console.log('1. Afficher toutes les questions');
-    console.log('2. Rechercher des questions par mot-clé');
-    console.log('3. Créer un fichier d’examen');
-    console.log('4. Générer un fichier VCard');
-    console.log('5. Simuler un examen');
-    console.log('6. Comparer son histogramme à la banque de questions');
-    console.log('7. Déplacer un fichier GIFT dans /data/');
-    console.log('8. Visualiser un histogramme des types de questions')
-    console.log('9. Quitter');
+    console.log('\x1b[34m%s\x1b[0m', '\nMenu principal :');
+    console.log('\x1b[36m%s\x1b[0m', '1. Afficher toutes les questions');
+    console.log('\x1b[36m%s\x1b[0m', '2. Rechercher des questions par mot-clé');
+    console.log('\x1b[36m%s\x1b[0m', '3. Créer un fichier d’examen');
+    console.log('\x1b[36m%s\x1b[0m', '4. Générer un fichier VCard');
+    console.log('\x1b[36m%s\x1b[0m', '5. Simuler un examen');
+    console.log('\x1b[36m%s\x1b[0m', '6. Comparer son histogramme à la banque de questions');
+    console.log('\x1b[36m%s\x1b[0m', '7. Déplacer un fichier GIFT dans /data/');
+    console.log('\x1b[36m%s\x1b[0m', '8. Visualiser un histogramme des types de questions');
+    console.log('\x1b[36m%s\x1b[0m', '9. Quitter');
+    
 
-    rl.question('Choisissez une option (1-8) : ', (choice) => {
+    rl.question('\x1b[36mChoisissez une option (1-8) : \x1b[0m', (choice) => {
         switch (choice.trim()) {
             case '1': // Afficher toutes les questions
                 afficherToutesLesQuestions();
@@ -191,25 +192,25 @@ function mainMenu() {
                 break;
 
             case '5': // Simuler un examen
-                simulerExamen();
+                simulateExam();
                 break;
 
             case '6': // Comparer histogrammes
                 const files = listGiftFiles(examsFolder);
                 if (files.length === 0) {
-                    console.log('Aucun fichier d’examen trouvé.');
+                    console.log('\x1b[31m%s\x1b[0m', 'Aucun fichier d’examen trouvé.');
                     mainMenu();
                 } else {
-                    console.log('Fichiers d’examen disponibles :');
+                    console.log('\x1b[32m%s\x1b[0m', 'Fichiers d’examen disponibles :');
                     files.forEach((file, index) => console.log(`[${index + 1}] ${file}`));
 
-                    rl.question('\nEntrez le numéro du fichier d’examen à analyser : ', (choice) => {
+                    rl.question('\x1b[34m \nEntrez le numéro du fichier d’examen à analyser : \x1b[0m', (choice) => {
                         const fileIndex = parseInt(choice, 10) - 1;
                         if (fileIndex >= 0 && fileIndex < files.length) {
                             const filePath = path.join(examsFolder, files[fileIndex]);
                             generateHistogram(filePath);
                         } else {
-                            console.log('Numéro invalide.');
+                            console.log('\x1b[31m%s\x1b[0m', 'Numéro invalide.');
                         }
                         mainMenu();
                     });
@@ -217,7 +218,7 @@ function mainMenu() {
                 break;
 
             case '7': // Déplacer un fichier GIFT vers /data/
-                rl.question('Entrez le chemin du fichier GIFT à déplacer : ', (filePath) => {
+                rl.question('\x1b[32mEntrez le chemin du fichier GIFT à déplacer : \x1b[0m', (filePath) => {
                     moveGiftFileToData(filePath);
                     mainMenu();
                 });
@@ -233,7 +234,7 @@ function mainMenu() {
                 break;
 
             default:
-                console.log('Option invalide. Veuillez réessayer.');
+                console.log('\x1b[31m%s\x1b[0m', 'Option invalide. Veuillez réessayer.');
                 mainMenu();
         }
     });
@@ -242,19 +243,19 @@ function mainMenu() {
 function analyserExamens() {
     const files = listGiftFiles(examsFolder);
     if (files.length === 0) {
-        console.log('Aucun fichier d’examen trouvé.');
+        console.log('\x1b[31m%s\x1b[0m', 'Aucun fichier d’examen trouvé.');
         mainMenu();
     } else {
-        console.log('Fichiers d’examen disponibles :');
+        console.log('\x1b[32m%s\x1b[0m', 'Fichiers d’examen disponibles :');
         files.forEach((file, index) => console.log(`[${index + 1}] ${file}`));
 
-        rl.question('\nEntrez le numéro du fichier d’examen à analyser : ', (choice) => {
+        rl.question('\x1b[32m\nEntrez le numéro du fichier d’examen à analyser : \x1b[0m', (choice) => {
             const fileIndex = parseInt(choice, 10) - 1;
             if (fileIndex >= 0 && fileIndex < files.length) {
                 const filePath = path.join(examsFolder, files[fileIndex]);
                 generateHistogramSeul(filePath);
             } else {
-                console.log('Numéro invalide.');
+                console.log('\x1b[31m%s\x1b[0m', 'Numéro invalide.');
             }
             mainMenu();
         });
@@ -278,19 +279,19 @@ function moveGiftFileToData(filePath) {
     const destinationPath = path.join(dataFolder, fileName);
 
     if (!fs.existsSync(filePath)) {
-        console.log(`Le fichier ${filePath} n'existe pas.`);
+        console.log('\x1b[31m%s\x1b[0m', `Le fichier ${filePath} n'existe pas.`);
         return;
     }
     if (path.extname(filePath) !== '.gift') {
-        console.log('Ce fichier n\'est pas un fichier GIFT valide.');
+        console.log('\x1b[31m%s\x1b[0m', 'Ce fichier n\'est pas un fichier GIFT valide.');
         return;
     }
     if (fs.existsSync(destinationPath)) {
-        console.log(`Le fichier ${fileName} existe déjà dans le dossier /data/.`);
+        console.log('\x1b[31m%s\x1b[0m', `Le fichier ${fileName} existe déjà dans le dossier /data/.`);
         return;
     }
     fs.renameSync(filePath, destinationPath);
-    console.log(`Le fichier a été déplacé vers /data/ : ${destinationPath}`);
+    console.log('\x1b[32m%s\x1b[0m', `Le fichier a été déplacé vers /data/ : ${destinationPath}`);
 }
 
 function afficherToutesLesQuestions() {
@@ -304,17 +305,19 @@ function afficherToutesLesQuestions() {
     });
 
     if (allQuestions.length === 0) {
-        console.log('\nAucune question valide trouvée.\n');
+        console.log('\x1b[31m%s\x1b[0m', '\nAucune question valide trouvée.\n');
         mainMenu();
     } else {
-        console.log(`\nQuestions disponibles (${tempQuestionnaire.length} question(s) ajoutée(s) au test) :\n`);
+        const addedQuestions = tempQuestionnaire.length;
+        const color = addedQuestions < 15 ? '\x1b[31m' : '\x1b[32m';
+        console.log(`\nQuestions disponibles (${color}${addedQuestions}\x1b[0m question(s) ajoutée(s) au test) :\n`);
         allQuestions.forEach((question, index) => {
             console.log(`[${index + 1}] ${question.title}`);
         });
 
-        console.log('\nEntrez le numéro d’une question pour voir ses détails.');
-        console.log('Entrez 0 pour revenir au menu principal.');
-        console.log('Entrez "test" pour afficher les questions déjà ajoutées au test.');
+        console.log('\x1b[36m%s\x1b[0m', '\nEntrez le numéro d’une question pour voir ses détails.');
+        console.log('\x1b[36m%s\x1b[0m', 'Entrez 0 pour revenir au menu principal.');
+        console.log('\x1b[36m%s\x1b[0m', 'Entrez "test" pour afficher les questions déjà ajoutées au test.');
 
         rl.question('\nVotre choix : ', (choice) => {
             const index = parseInt(choice, 10) - 1;
@@ -326,7 +329,7 @@ function afficherToutesLesQuestions() {
             } else if (index >= 0 && index < allQuestions.length) {
                 afficherDetailsQuestion(allQuestions[index], allQuestions); // Afficher les détails de la question sélectionnée
             } else {
-                console.log('Choix invalide. Essayez à nouveau.');
+                console.log('\x1b[31m%s\x1b[0m', 'Choix invalide. Essayez à nouveau.');
                 afficherToutesLesQuestions();
             }
         });
@@ -335,18 +338,18 @@ function afficherToutesLesQuestions() {
 
 function afficherQuestionsTest() {
     if (tempQuestionnaire.length === 0) {
-        console.log('\nAucune question n’a encore été ajoutée au test.');
+        console.log('\x1b[31m%s\x1b[0m', '\nAucune question n’a encore été ajoutée au test.');
     } else {
-        console.log(`\nQuestions ajoutées au test (${tempQuestionnaire.length} question(s)) :\n`);
+        console.log('\x1b[32m%s\x1b[0m', `\nQuestions ajoutées au test (${tempQuestionnaire.length} question(s)) :\n`);
         tempQuestionnaire.forEach((question, index) => {
             console.log(`[${index + 1}] ${question.title}`);
         });
     }
 
-    console.log('\nOptions :');
-    console.log('1. Revenir à la liste des questions.');
-    console.log('2. Finaliser le test.');
-    console.log('3. Revenir au menu principal.');
+    console.log('\x1b[34m%s\x1b[0m', '\nOptions :');
+    console.log('\x1b[36m%s\x1b[0m', '1. Revenir à la liste des questions.');
+    console.log('\x1b[36m%s\x1b[0m', '2. Finaliser le test.');
+    console.log('\x1b[36m%s\x1b[0m', '3. Revenir au menu principal.');
 
     rl.question('\nVotre choix : ', (option) => {
         if (option === '1') {
@@ -356,7 +359,7 @@ function afficherQuestionsTest() {
         } else if (option === '3') {
             mainMenu();
         } else {
-            console.log('Choix invalide. Essayez à nouveau.');
+            console.log('\x1b[31m%s\x1b[0m', 'Choix invalide. Essayez à nouveau.');
             afficherQuestionsTest();
         }
     });
@@ -374,20 +377,21 @@ function afficherDetailsQuestion(question, allQuestions) {
         console.log(`[${index + 1}] ${choice.choice} ${choice.isCorrect ? '(Correct)' : ''}`);
     });
 
-    console.log('\nOptions :');
-    console.log('1. Ajouter cette question au test.');
-    console.log('2. Revenir à la liste des questions.');
-    console.log('3. Revenir au menu principal.');
+    console.log('\x1b[34m\nOptions :\x1b[0m'); 
+    console.log('\x1b[36m1. Ajouter cette question au test.\x1b[0m');
+    console.log('\x1b[36m2. Revenir à la liste des questions.\x1b[0m');
+    console.log('\x1b[36m3. Revenir au menu principal.\x1b[0m');
+    
 
     rl.question('\nVotre choix : ', (option) => {
         if (option === '1') {
             // Vérifier si la question est déjà dans le test
             const alreadyAdded = tempQuestionnaire.some(q => q.title === question.title);
             if (alreadyAdded) {
-                console.log(`\nLa question "${question.title}" est déjà dans le test.`);
+                console.log('\x1b[31m%s\x1b[0m', `\nLa question "${question.title}" est déjà dans le test.`);
             } else {
                 tempQuestionnaire.push(question); // Ajouter la question au test
-                console.log(`\nLa question "${question.title}" a été ajoutée au test (${tempQuestionnaire.length} question(s) au total).`);
+                console.log('\x1b[32m%s\x1b[0m', `\nLa question "${question.title}" a été ajoutée au test (${tempQuestionnaire.length} question(s) au total).`);
             }
             afficherToutesLesQuestions(); // Retourner à la liste des questions
         } else if (option === '2') {
@@ -395,7 +399,7 @@ function afficherDetailsQuestion(question, allQuestions) {
         } else if (option === '3') {
             mainMenu(); // Retourner au menu principal
         } else {
-            console.log('Choix invalide. Essayez à nouveau.');
+            console.log('\x1b[32m%s\x1b[0m', 'Choix invalide. Essayez à nouveau.');
             afficherDetailsQuestion(question, allQuestions); // Recharger les détails de la question
         }
     });
@@ -407,7 +411,7 @@ function afficherDetailsQuestion(question, allQuestions) {
 // Rechercher des questions par mot-clé
 
 function rechercherQuestionsParMotCle() {
-    rl.question('\nEntrez un mot-clé pour rechercher des questions : ', (keyword) => {
+    rl.question('\x1b[36m\nEntrez un mot-clé pour rechercher des questions : \x1b[0m', (keyword) => {
         const files = listGiftFiles(dataFolder);
         let allQuestions = [];
         files.forEach(file => {
@@ -419,12 +423,12 @@ function rechercherQuestionsParMotCle() {
 
         const results = allQuestions.filter(q => q.questionText.toLowerCase().includes(keyword.toLowerCase()));
         if (results.length > 0) {
-            console.log(`\nQuestions trouvées pour "${keyword}" :\n`);
+            console.log('\x1b[32m%s\x1b[0m', `\nQuestions trouvées pour "${keyword}" :\n`);
             results.forEach((q, index) => {
                 console.log(`[${index + 1}] ${q.title} - ${q.questionText}`);
             });
         } else {
-            console.log('Aucune question trouvée.');
+            console.log('\x1b[31m%s\x1b[0m', 'Aucune question trouvée.');
         }
         mainMenu();
     });
@@ -434,16 +438,16 @@ function rechercherQuestionsParMotCle() {
 
 function creerExamen() {
     if (tempQuestionnaire.length < 5) { // A remettre à 15 plus tard
-        console.log('\nLe test doit contenir au moins 15 questions.');
+        console.log('\x1b[31m%s\x1b[0m', '\nLe test doit contenir au moins 15 questions.');
         afficherQuestionsTest();
     } else if (tempQuestionnaire.length > 20) {
-        console.log('\nLe test ne peut pas contenir plus de 20 questions.');
+        console.log('\x1b[31m%s\x1b[0m', '\nLe test ne peut pas contenir plus de 20 questions.');
         afficherQuestionsTest();
     } else {
-        rl.question('\nEntrez un nom pour le fichier d’examen (sans extension) : ', (fileName) => {
+        rl.question('\x1b[32m%s\x1b[0m', '\nEntrez un nom pour le fichier d’examen (sans extension) : ', (fileName) => {
             saveExamToFile(tempQuestionnaire, `${fileName}.gift`); // Appel à la fonction
             tempQuestionnaire = []; // Réinitialiser le questionnaire temporaire
-            console.log(`\nFichier d'examen "${fileName}.gift" créé avec succès.`);
+            console.log('\x1b[32m%s\x1b[0m', `\nFichier d'examen "${fileName}.gift" créé avec succès.`);
             mainMenu();
         });
     }
@@ -456,7 +460,7 @@ function saveExamToFile(questions, fileName) {
         .map(q => `::${q.title}::${q.questionText}{\n${q.choices.map(c => `${c.isCorrect ? '=' : '~'}${c.choice}`).join('\n')}\n}`)
         .join('\n\n');
     fs.writeFileSync(outputPath, content, 'utf-8');
-    console.log(`\nFichier d'examen sauvegardé avec succès : ${outputPath}`);
+    console.log('\x1b[32m%s\x1b[0m', `\nFichier d'examen sauvegardé avec succès : ${outputPath}`);
 }
 
 // Fonction pour générer une VCard
@@ -479,7 +483,7 @@ function saveVCard(vcard, fileName) {
     }
     const filePath = path.join(vcardFolder, `${fileName}.vcf`);
     fs.writeFileSync(filePath, vcard, 'utf-8');
-    console.log(`\nFichier VCard créé avec succès : ${filePath}`);
+    console.log('\x1b[32m%s\x1b[0m', `\nFichier VCard créé avec succès : ${filePath}`);
 }
 
 // Générer un fichier VCard
@@ -501,26 +505,34 @@ function genererVCard() {
 }
 // Simuler un examen
 
-function simulerExamen() {
+function simulateExam() {
     const files = listGiftFiles(examsFolder);
     if (files.length === 0) {
-        console.log('Aucun fichier d’examen trouvé.');
+        console.log('\x1b[31m%s\x1b[0m', 'Aucun fichier d’examen trouvé.');
         mainMenu();
     } else {
-        console.log('Fichiers d’examen disponibles :');
+        console.log('\x1b[32m%s\x1b[0m', 'Fichiers d’examen disponibles :');
         files.forEach((file, index) => console.log(`[${index + 1}] ${file}`));
 
-        rl.question('\nEntrez le numéro du fichier d’examen à simuler : ', (choice) => {
+        rl.question('\x1b[36m\nEntrez le numéro du fichier d’examen à simuler : \x1b[0m', (choice) => {
             const fileIndex = parseInt(choice, 10) - 1;
             if (fileIndex >= 0 && fileIndex < files.length) {
                 const filePath = path.join(examsFolder, files[fileIndex]);
-                simulateExam(filePath, rl);
+                startExam(filePath);  // Appel de la fonction qui va gérer l'examen
             } else {
-                console.log('Numéro invalide.');
+                console.log('\x1b[31m%s\x1b[0m', 'Numéro invalide.');
                 mainMenu();
             }
         });
     }
+}
+
+// Nouvelle fonction pour gérer le démarrage de l'examen
+function startExam(filePath) {
+    console.log(`Vous avez choisi le fichier : ${filePath}`);
+    console.log('\x1b[31m%s\x1b[0m', `en attente de l'implémenation du code de passage de l'examen`);
+    mainMenu();
+    // Code à implémenter pour tester les examens.
 }
 
 // Initialiser les dossiers si nécessaires
