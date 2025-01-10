@@ -402,14 +402,14 @@ function afficherDetailsQuestion(question, allQuestions) {
 }
 
 
-
-
 // Rechercher des questions par mot-clé
 
 function rechercherQuestionsParMotCle() {
     rl.question('\nEntrez un mot-clé pour rechercher des questions : ', (keyword) => {
         const files = listGiftFiles(dataFolder);
         let allQuestions = [];
+        
+        // Charger toutes les questions
         files.forEach(file => {
             const filePath = path.join(dataFolder, file);
             const rawQuestions = loadQuestions(filePath);
@@ -417,11 +417,18 @@ function rechercherQuestionsParMotCle() {
             allQuestions = allQuestions.concat(parsedQuestions);
         });
 
-        const results = allQuestions.filter(q => q.questionText.toLowerCase().includes(keyword.toLowerCase()));
+        // Rechercher dans les titres et le texte des questions
+        const results = allQuestions.filter(q => 
+            q.questionText.toLowerCase().includes(keyword.toLowerCase()) ||
+            (q.title && q.title.toLowerCase().includes(keyword.toLowerCase()))
+        );
+
+        // Afficher les résultats
         if (results.length > 0) {
             console.log(`\nQuestions trouvées pour "${keyword}" :\n`);
             results.forEach((q, index) => {
-                console.log(`[${index + 1}] ${q.title} - ${q.questionText}`);
+                const title = q.title || "Titre non disponible";
+                console.log(`[${index + 1}] ${title} - ${q.questionText}`);
             });
         } else {
             console.log('Aucune question trouvée.');
@@ -429,6 +436,7 @@ function rechercherQuestionsParMotCle() {
         mainMenu();
     });
 }
+
 
 // Créer un fichier d'examen
 
@@ -470,8 +478,8 @@ function generateVCard(surname, name, email, phone) {
         'END:VCARD'
     ].join('\n');
 }
-// Fonction pour sauvegarder une VCard
 
+// Fonction pour sauvegarder une VCard
 function saveVCard(vcard, fileName) {
     const vcardFolder = './vcard/';
     if (!fs.existsSync(vcardFolder)) {
@@ -482,23 +490,51 @@ function saveVCard(vcard, fileName) {
     console.log(`\nFichier VCard créé avec succès : ${filePath}`);
 }
 
-// Générer un fichier VCard
+// Fonction pour valider l'email
+function isValidEmail(email) {
+    return email.endsWith('@gmail.com');
+}
 
+// Fonction pour valider le numéro de téléphone
+function isValidPhone(phone) {
+    return /^[0-9]+$/.test(phone);
+}
+
+// Générer un fichier VCard
 function genererVCard() {
     rl.question('Entrez votre prénom : ', (name) => {
         rl.question('Entrez votre nom : ', (surname) => {
-            rl.question('Entrez votre email : ', (email) => {
-                rl.question('Entrez votre numéro de téléphone : ', (phone) => {
-                    const vcard = generateVCard(surname, name, email, phone);
-                    rl.question('Entrez un nom pour le fichier VCard : ', (fileName) => {
-                        saveVCard(vcard, fileName);
-                        mainMenu();
-                    });
+            const askEmail = () => {
+                rl.question('Entrez votre email : ', (email) => {
+                    if (!isValidEmail(email)) {
+                        console.log("\nErreur : L'email doit se terminer par @gmail.com.\n");
+                        askEmail();
+                    } else {
+                        askPhone(email);
+                    }
                 });
-            });
+            };
+
+            const askPhone = (email) => {
+                rl.question('Entrez votre numéro de téléphone : ', (phone) => {
+                    if (!isValidPhone(phone)) {
+                        console.log("\nErreur : Le numéro de téléphone doit contenir uniquement des chiffres.\n");
+                        askPhone(email);
+                    } else {
+                        const vcard = generateVCard(surname, name, email, phone);
+                        rl.question('Entrez un nom pour le fichier VCard : ', (fileName) => {
+                            saveVCard(vcard, fileName);
+                            mainMenu();
+                        });
+                    }
+                });
+            };
+
+            askEmail();
         });
     });
 }
+
 // Simuler un examen
 
 function simulerExamen() {
