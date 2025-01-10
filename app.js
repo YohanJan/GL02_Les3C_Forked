@@ -323,6 +323,7 @@ function afficherToutesLesQuestions() {
             const index = parseInt(choice, 10) - 1;
 
             if (choice === '0') {
+                tempQuestionnaire = [];
                 mainMenu(); // Retourner au menu principal
             } else if (choice === 'test') {
                 afficherQuestionsTest(); // Afficher les questions du test
