@@ -506,37 +506,55 @@ function isValidPhone(phone) {
 
 // Générer un fichier VCard
 function genererVCard() {
-    rl.question('Entrez votre prénom : ', (name) => {
-        rl.question('Entrez votre nom : ', (surname) => {
-            const askEmail = () => {
-                rl.question('Entrez votre email : ', (email) => {
-                    if (!isValidEmail(email)) {
-                        console.log("\nErreur : L'email doit se terminer par @gmail.com.\n");
-                        askEmail();
-                    } else {
-                        askPhone(email);
-                    }
-                });
-            };
+    const askName = () => {
+        rl.question('Entrez votre prénom : ', (name) => {
+            if (!name.trim()) {
+                console.log("\nErreur : Le prénom est obligatoire.\n");
+                return askName();
+            }
 
-            const askPhone = (email) => {
-                rl.question('Entrez votre numéro de téléphone : ', (phone) => {
-                    if (!isValidPhone(phone)) {
-                        console.log("\nErreur : Le numéro de téléphone doit contenir uniquement des chiffres.\n");
-                        askPhone(email);
-                    } else {
-                        const vcard = generateVCard(surname, name, email, phone);
-                        rl.question('Entrez un nom pour le fichier VCard : ', (fileName) => {
-                            saveVCard(vcard, fileName);
-                            mainMenu();
-                        });
-                    }
-                });
-            };
-
-            askEmail();
+            askSurname(name); 
         });
-    });
+    };
+
+    const askSurname = (name) => {
+        rl.question('Entrez votre nom : ', (surname) => {
+            if (!surname.trim()) {
+                console.log("\nErreur : Le nom est obligatoire.\n");
+                return askSurname(name); 
+            }
+
+            askEmail(name, surname);
+        });
+    };
+
+    const askEmail = (name, surname) => {
+        rl.question('Entrez votre email : ', (email) => {
+            if (!isValidEmail(email)) {
+                console.log("\nErreur : L'email doit se terminer par @gmail.com.\n");
+                return askEmail(name, surname);
+            }
+
+            askPhone(name, surname, email);
+        });
+    };
+
+    const askPhone = (name, surname, email) => {
+        rl.question('Entrez votre numéro de téléphone : ', (phone) => {
+            if (!isValidPhone(phone)) {
+                console.log("\nErreur : Le numéro de téléphone doit contenir uniquement des chiffres.\n");
+                return askPhone(name, surname, email);
+            }
+
+            const vcard = generateVCard(surname, name, email, phone);
+            rl.question('Entrez un nom pour le fichier VCard : ', (fileName) => {
+                saveVCard(vcard, fileName);
+                mainMenu();
+            });
+        });
+    };
+
+    askName();
 }
 
 // Simuler un examen
