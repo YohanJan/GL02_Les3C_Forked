@@ -142,7 +142,55 @@ function generateHistogram(examFilePath) {
     displayHistogram('Examen', examDistribution);
     displayHistogram('Banque Nationale', bankDistribution);
 }
+async function vegaGraph(data){
+    const spec = {
+        $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+        description: "Types de questions et leur nombre",
+        data: { values: data },
+        mark: "bar",
+        encoding: {
+            x: { field: "type", type: "ordinal", title: "Type de question" },
+            y: { field: "count", type: "quantitative", title: "Nombre de questions" },
+            color: { field: "type", type: "nominal" },
+        },
+    };
 
+    // Générer et sauvegarder les graphiques
+    await renderChartToHtml(spec);
+    await renderChartToPdf();
+}
+async function renderChartToHtml(spec) {
+    const vegaView = new vega.View(vega.parse(vegalite.compile(spec).spec))
+        .renderer('none')
+        .initialize();
+    const svg = await vegaView.toSVG(); // Génération SVG à partir du graphique
+
+    // Sauvegarde du SVG dans un fichier HTML temporaire
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head><meta charset="UTF-8"><title>Chart</title></head>
+        <body>${svg}</body>
+        </html>
+    `;
+    const htmlPath = './chart.html';
+    await fs.writeFile(htmlPath, htmlContent, 'utf8');
+    console.log("Graphique HTML généré avec succès :", htmlPath);
+}
+// Génération et sauvegarde du graphique en PDF
+async function renderChartToPdf() {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(`file://${process.cwd()}/chart.html`, { waitUntil: 'load' });
+    const pdfPath = `./data/chart-${new Date().toISOString().replace(/[:.]/g, "-")}.pdf`;
+    await page.pdf({
+        path: pdfPath,
+        format: 'A4',
+        printBackground: true,
+    });
+    await browser.close();
+    console.log("Graphique PDF généré avec succès :", pdfPath);
+}
 // Fonction pour calculer la répartition des types de questions
 function calculateTypeDistribution(questions) {
     return questions.reduce((acc, question) => {
